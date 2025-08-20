@@ -1,6 +1,7 @@
 (function() {
     let highlightedElement = null;
     let elements_count = 0;
+    let collectedElements = [];
 
     // Подсветка элемента при наведении
     function handleMouseover(e) {
@@ -13,28 +14,36 @@
 
     // Получение кода по правому клику
     function handleContextmenu(e) {
-        
         elements_count += 1;
         e.preventDefault();
 
-        // Получаем и выводим код элемента
         const elementCode = e.target.outerHTML;
+        collectedElements.push(elementCode);
         console.log('Код элемента:', elementCode);
 
-        // Копируем в буфер обмена
         navigator.clipboard.writeText(elementCode).then(() => {
             console.log('Код скопирован в буфер обмена');
         }).catch(err => {
             console.error('Ошибка копирования:', err);
         });
-        // Очистка
+
+        // После второго клика
         if (elements_count == 2) {
             console.log('Элементов больше двух');
-            // Убираем обработчики после второго клика
+            
+            // Отправляем данные в background
+            chrome.runtime.sendMessage({
+                action: 'openPopup',
+                collectedElements: collectedElements
+            });
+            
+            // Убираем обработчики
             document.removeEventListener('mouseover', handleMouseover);
             document.removeEventListener('contextmenu', handleContextmenu);
-            highlightedElement.style.outline = '';
-            highlightedElement = null;
+            if (highlightedElement) {
+                highlightedElement.style.outline = '';
+                highlightedElement = null;
+            }
             return;
         }
     }
