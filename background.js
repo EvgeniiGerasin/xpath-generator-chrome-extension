@@ -10,11 +10,11 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 // Слушатель сообщений от контент-скрипта
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.action === 'openPopup') {
         // Сохраняем данные в storage
         console.log('Cохраняем в сторидж');
-        chrome.storage.local.set({ collectedElements: request.collectedElements }, () => {
+        await chrome.storage.local.set({ collectedElements: request.collectedElements }, () => {
             console.log('Данные сохранены. Откройте popup через клик на иконку.');
         });
         // Открываем отдельное окно
