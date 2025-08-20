@@ -25,13 +25,27 @@ function generateXPath(element0, element1) {
         return;
     }
     
-    const prompt = `сгенерируй мне xpath для целевого элемента ${element0} в ${element1}. Делай максимально универсальный xpath. Избегай в свойствах случайно сгенерированных значений (например plex-999). универсальный вариант без завязки на случайные атрибуты. Пришли только xpath (можно несоклько)`;
+    const prompt = `сгенерируй мне xpath для целевого элемента ${element0} в ${element1}. Делай максимально универсальный xpath. 
+    Избегай в свойствах случайно сгенерированных значений (например plex-999). 
+    универсальный вариант без завязки на случайные атрибуты. Пришли только xpath 
+    (можно несоклько)
+    
+    Пример ответа:
+    - //img[@alt='User avatar' and contains(@class, 'rounded-full')]
+    - //img[@alt='User avatar' and contains(@src, 'imagedelivery.net')]
+    - //div[contains(@class, 'max-w-threadContentWidth')]//img[@alt='User avatar']
+    - ...
+    - ...
+    
+    `
+    ;
 
     fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
             'Authorization': 'Bearer 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',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Title': 'Your Site Name',
         },
         body: JSON.stringify({
             model: 'moonshotai/kimi-k2:free',
@@ -40,7 +54,10 @@ function generateXPath(element0, element1) {
                     role: 'user',
                     content: prompt
                 }
-            ]
+            ],
+            stream: false,
+            temperature: 0.3,
+            max_tokens: 1000
         })
     })
         .then(response => {
