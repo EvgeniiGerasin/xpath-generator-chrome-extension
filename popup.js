@@ -18,7 +18,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Функция для генерации XPath через OpenRouter
 function generateXPath(element0, element1) {
-    const prompt = `сгенерируй мне xpath для целевого элемента ${element0} в ${element1}. Пришли только xpath (можно несоклько)`;
+    // Проверяем, что элементы существуют
+    if (!element0 || !element1) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<p style="color: red;">Ошибка: не удалось получить элементы</p>';
+        return;
+    }
+    
+    const prompt = `сгенерируй мне xpath для целевого элемента ${element0} в ${element1}. Делай максимально универсальный xpath. Избегай в свойствах случайно сгенерированных значений (например plex-999). универсальный вариант без завязки на случайные атрибуты. Пришли только xpath (можно несоклько)`;
 
     fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -27,7 +34,7 @@ function generateXPath(element0, element1) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            model: 'openai/gpt-oss-20b:free',
+            model: 'moonshotai/kimi-k2:free',
             messages: [
                 {
                     role: 'user',
@@ -36,8 +43,31 @@ function generateXPath(element0, element1) {
             ]
         })
     })
-        .then(response => response.json())
+        .then(response => {
+            // Сохраняем ответ для возможной отладки
+            const responseClone = response.clone();
+            
+            // Проверяем статус ответа
+            if (!response.ok) {
+                // Читаем тело ответа для отладки
+                return responseClone.text().then(errorBody => {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            // Проверяем, что данные корректны
+            if (!data) {
+                throw new Error('Пустой ответ от сервера');
+            }
+            
+            if (!data.choices || data.choices.length === 0) {
+                // Показываем весь ответ для отладки
+                const debugInfo = JSON.stringify(data, null, 2);
+                throw new Error(`Не удалось получить ответ от сервера. Полный ответ: ${debugInfo}`);
+            }
+            
             const xpathResult = data.choices[0].message.content;
 
             // Показываем только результат
@@ -49,11 +79,11 @@ function generateXPath(element0, element1) {
             // Показываем только ошибку
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = `
-            <div style="color: red; padding: 20px; background: #ffebee; border-radius: 4px;">
-                <h3 style="margin-top: 0;">Ошибка:</h3>
-                <p>${error.message}</p>
-            </div>
-        `;
+                <div style="color: red; padding: 20px; background: #ffebee; border-radius: 4px;">
+                    <h3 style="margin-top: 0;">Ошибка:</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
         });
 }
 
