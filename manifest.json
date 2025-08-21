@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Xpath generator with AI",
     "version": "0.1",
-    "description": "Генерирует xpath для выделенных элементов страницы",
+    "description": "Генерирует xpath для выделенных элементов страницы \n Разработал Евгений Герасин",
     "permissions": [
         "activeTab",
         "scripting",
@@ -16,6 +16,9 @@
         "default_title": "Запустить процесс"
     },
     "icons": {
-        
+        "16": "dist/icons/icon.png",
+        "32": "dist/icons/icon.png",
+        "48": "dist/icons/icon.png",
+        "128": "dist/icons/icon.png"
     }
 }

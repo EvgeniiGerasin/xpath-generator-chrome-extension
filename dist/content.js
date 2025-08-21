@@ -9,7 +9,11 @@
             highlightedElement.style.outline = '';
         }
         highlightedElement = e.target;
-        highlightedElement.style.outline = '2px solid red';
+        if (elements_count === 0) {
+            highlightedElement.style.outline = '2px solid red';
+        } else {
+            highlightedElement.style.outline = '2px solid green';
+        } 
     }
 
     // Получение кода по правому клику
