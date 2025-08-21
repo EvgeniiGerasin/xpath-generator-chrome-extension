@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             url: chrome.runtime.getURL("workspace.html"),
             type: "popup",
             width: 600,
-            height: 800,
+            height: 500,
             left: 200,
             top: 200
         });

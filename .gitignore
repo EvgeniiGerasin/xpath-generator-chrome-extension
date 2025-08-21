@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.env
+dist/*
+!dist/popup.html
+!dist/workspace.html
+.env
+keys.json
+package-lock.json

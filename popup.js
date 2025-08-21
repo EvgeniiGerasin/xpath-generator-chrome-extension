@@ -17,101 +17,99 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Функция для генерации XPath через OpenRouter
-function generateXPath(element0, element1) {
+async function generateXPath(element0, element1) {
     // Проверяем, что элементы существуют
     if (!element0 || !element1) {
         const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = '<p style="color: red;">Ошибка: не удалось получить элементы</p>';
         return;
     }
-    
-    const prompt = `сгенерируй мне xpath для целевого элемента ${element0} в ${element1}. Делай максимально универсальный xpath. 
+
+    const prompt = `сгенерируй мне максимально короткие xpath для целевого элемента ${element0} в ${element1}. Делай максимально универсальный xpath. 
     Избегай в свойствах случайно сгенерированных значений (например plex-999). 
     универсальный вариант без завязки на случайные атрибуты. Пришли только xpath 
     (можно несоклько)
     
     Пример ответа:
-    - //img[@alt='User avatar' and contains(@class, 'rounded-full')]
-    - //img[@alt='User avatar' and contains(@src, 'imagedelivery.net')]
-    - //div[contains(@class, 'max-w-threadContentWidth')]//img[@alt='User avatar']
-    - ...
-    - ...
+    1) //img[@alt='User avatar' and contains(@class, 'rounded-full')]
+    2) //img[@alt='User avatar' and contains(@src, 'imagedelivery.net')]
+    3) //div[contains(@class, 'max-w-threadContentWidth')]//img[@alt='User avatar']
+    n) ...
     
-    `
-    ;
+    `;
 
-    fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer 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',
-            'Content-Type': 'application/json',
-            'X-Title': 'Your Site Name',
-        },
-        body: JSON.stringify({
-            model: 'moonshotai/kimi-k2:free',
-            messages: [
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            stream: false,
-            temperature: 0.3,
-            max_tokens: 1000
-        })
-    })
-        .then(response => {
-            // Сохраняем ответ для возможной отладки
-            const responseClone = response.clone();
-            
-            // Проверяем статус ответа
-            if (!response.ok) {
-                // Читаем тело ответа для отладки
-                return responseClone.text().then(errorBody => {
-                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Проверяем, что данные корректны
-            if (!data) {
-                throw new Error('Пустой ответ от сервера');
-            }
-            
-            if (!data.choices || data.choices.length === 0) {
-                // Показываем весь ответ для отладки
-                const debugInfo = JSON.stringify(data, null, 2);
-                throw new Error(`Не удалось получить ответ от сервера. Полный ответ: ${debugInfo}`);
-            }
-            
-            const xpathResult = data.choices[0].message.content;
+    response = await HuggingFaceRequest(await getAPIKey(), prompt);
+    await displayResult(JSON.stringify(response));
+    // displayResult(response.choices[0].message.content);
+    };
 
-            // Показываем только результат
-            displayResult(xpathResult);
-        })
-        .catch(error => {
-            console.error('Ошибка при генерации XPath:', error);
 
-            // Показываем только ошибку
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = `
-                <div style="color: red; padding: 20px; background: #ffebee; border-radius: 4px;">
-                    <h3 style="margin-top: 0;">Ошибка:</h3>
-                    <p>${error.message}</p>
-                </div>
-            `;
-        });
+
+async function displayResult(xpathResult) {
+    await PutToResult(xpathResult);
 }
 
-// Функция для отображения только результата
-function displayResult(xpathResult) {
-    const resultsDiv = document.getElementById('results');
+// Функция для получения API ключа из файла keys.json
+async function getAPIKey() {
+    try {
+        const response = await fetch('./keys.json');
+        if (!response.ok) {
+            await PutToResult('Ошибка при чтении файла keys.json, обратитесь в техподдержку')
+        }
+        const data = await response.json();
+        return data.openrouter_api_key
+    } catch (error) {
+        await PutToResult(`Ошибка при работе с файлом keys.json:\n\n${error}`)
+    }
+}
 
-    resultsDiv.innerHTML = `
-        <div style="padding: 20px;">
-            <h2 style="color: #2e7d32; margin-top: 0;">Сгенерированные XPath:</h2>
-            <pre style="background: #e8f5e8; padding: 15px; border-radius: 5px; border: 1px solid #c8e6c9; font-family: monospace; white-space: pre-wrap; word-wrap: break-word;">${xpathResult}</pre>
-        </div>
-    `;
+async function PutToResult(value) {
+    const resultField = await document.getElementById('results');
+    resultField.innerText = value;
+}
+
+async function HuggingFaceRequest(apiKey, prompt) {
+    try {
+        const response = await fetch(
+            "https://router.huggingface.co/v1/chat/completions",
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages: [
+                        {
+                            role: "user",
+                            content: prompt,
+                        },
+                    ],
+                    model: "openai/gpt-oss-120b:fireworks-ai",
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = `HTTP ${response.status}: ${JSON.stringify(errorData)}`;
+            await PutToResult(`Ошибка запроса: ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            await PutToResult(`API Error: ${data.error}`);
+            throw new Error(`API Error: ${data.error}`);
+        }
+
+        return data;
+
+    } catch (error) {
+        if (error.name !== 'Error') { 
+            await PutToResult(`Ошибка: ${error.message}`);
+        }
+        throw error;
+    }
 }
