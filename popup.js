@@ -39,8 +39,8 @@ async function generateXPath(element0, element1) {
     `;
 
     response = await HuggingFaceRequest(await getAPIKey(), prompt);
-    await displayResult(JSON.stringify(response));
-    // displayResult(response.choices[0].message.content);
+    // await displayResult(JSON.stringify(response));
+    await displayResult(response.choices[0].message.content);
     };
 
 
