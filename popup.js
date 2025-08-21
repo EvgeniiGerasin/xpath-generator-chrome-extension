@@ -12,21 +12,9 @@ function initializeExtension() {
 function loadCollectedElements() {
     chrome.storage.local.get(['collectedElements'], function (result) {
         const elements = result.collectedElements || [];
-        displayResults(elements);
+        console.log(elements)
+        generateXPath(elements[0], elements[1])
     });
-}
-
-// Метод для отображения результатов
-function displayResults(elements) {
-    const resultsDiv = document.getElementById('results');
-
-    if (elements.length === 0) {
-        showNoDataMessage(resultsDiv);
-        return;
-    }
-
-    showLoadingIndicator(resultsDiv);
-    generateXPath(elements[0], elements[1]);
 }
 
 // Метод для отображения сообщения об отсутствии данных
@@ -35,19 +23,13 @@ function showNoDataMessage(resultsDiv) {
 }
 
 // Метод для отображения индикатора загрузки
-function showLoadingIndicator(resultsDiv) {
-    resultsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Генерируем XPath...</p>';
+function showLoadingIndicator() {
+    putToHtmlResult("Генерируем XPath...")
 }
 
-// Функция для генерации XPath через OpenRouter
+// Функция для генерации XPath
 async function generateXPath(element0, element1) {
-    // Проверяем, что элементы существуют
-    if (!element0 || !element1) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = '<p style="color: red;">Ошибка: не удалось получить элементы</p>';
-        return;
-    }
-
+    
     const prompt = `сгенерируй мне максимально короткие xpath для целевого элемента ${element0} в ${element1}. Делай максимально универсальный xpath. 
     Избегай в свойствах случайно сгенерированных значений (например plex-999). 
     универсальный вариант без завязки на случайные атрибуты. Пришли только xpath 
@@ -60,38 +42,32 @@ async function generateXPath(element0, element1) {
     n) ...
     
     `;
-
-    response = await HuggingFaceRequest(await getAPIKey(), prompt);
-    // await displayResult(JSON.stringify(response));
-    await displayResult(response.choices[0].message.content);
+    response = await huggingFaceRequest(await getAPIKey(), prompt);
+    // await putToHtmlResult(JSON.stringify(response));
+    await putToHtmlResult(response.choices[0].message.content);
     };
-
-
-
-async function displayResult(xpathResult) {
-    await PutToResult(xpathResult);
-}
 
 // Функция для получения API ключа из файла keys.json
 async function getAPIKey() {
     try {
         const response = await fetch('./keys.json');
         if (!response.ok) {
-            await PutToResult('Ошибка при чтении файла keys.json, обратитесь в техподдержку')
+            await putToHtmlResult('Ошибка при чтении файла keys.json, обратитесь в техподдержку')
         }
         const data = await response.json();
         return data.openrouter_api_key
     } catch (error) {
-        await PutToResult(`Ошибка при работе с файлом keys.json:\n\n${error}`)
+        await putToHtmlResult(`Ошибка при работе с файлом keys.json:\n\n${error}`)
     }
 }
 
-async function PutToResult(value) {
+async function putToHtmlResult(value) {
     const resultField = await document.getElementById('results');
     resultField.innerText = value;
 }
 
-async function HuggingFaceRequest(apiKey, prompt) {
+async function huggingFaceRequest(apiKey, prompt) {
+    showLoadingIndicator()
     try {
         const response = await fetch(
             "https://router.huggingface.co/v1/chat/completions",
@@ -116,14 +92,14 @@ async function HuggingFaceRequest(apiKey, prompt) {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             const errorMessage = `HTTP ${response.status}: ${JSON.stringify(errorData)}`;
-            await PutToResult(`Ошибка запроса: ${errorMessage}`);
+            await putToHtmlResult(`Ошибка запроса: ${errorMessage}`);
             throw new Error(errorMessage);
         }
 
         const data = await response.json();
 
         if (data.error) {
-            await PutToResult(`API Error: ${data.error}`);
+            await putToHtmlResult(`API Error: ${data.error}`);
             throw new Error(`API Error: ${data.error}`);
         }
 
@@ -131,7 +107,7 @@ async function HuggingFaceRequest(apiKey, prompt) {
 
     } catch (error) {
         if (error.name !== 'Error') { 
-            await PutToResult(`Ошибка: ${error.message}`);
+            await putToHtmlResult(`Ошибка: ${error.message}`);
         }
         throw error;
     }
