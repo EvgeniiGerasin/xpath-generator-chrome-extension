@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Мое расширение",
-    "version": "1.0",
-    "description": "Расширение с background script",
+    "name": "Xpath generator with AI",
+    "version": "0.1",
+    "description": "Генерирует xpath для выделенных элементов страницы",
     "permissions": [
         "activeTab",
         "scripting",
@@ -10,7 +10,7 @@
         "storage"
     ],
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "dist/background.js"
     },
     "action": {
         "default_title": "Запустить процесс"

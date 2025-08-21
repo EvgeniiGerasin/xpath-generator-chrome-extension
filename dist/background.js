@@ -5,7 +5,7 @@ chrome.action.onClicked.addListener((tab) => {
     // Инжектим контент-скрипт в активную вкладку
     chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        files: ['content.js']
+        files: ['dist/content.js']
     });
 });
 
@@ -19,7 +19,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         });
         // Открываем отдельное окно
         chrome.windows.create({
-            url: chrome.runtime.getURL("workspace.html"),
+            url: chrome.runtime.getURL("dist/workspace.html"),
             type: "popup",
             width: 600,
             height: 500,
