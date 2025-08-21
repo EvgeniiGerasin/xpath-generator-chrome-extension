@@ -1,20 +1,43 @@
-document.addEventListener('DOMContentLoaded', function () {
+// Инициализируем расширение
+initializeExtension();
+
+// Метод для инициализации при загрузке DOM
+function initializeExtension() {
+    document.addEventListener('DOMContentLoaded', function () {
+        loadCollectedElements();
+    });
+}
+
+// Метод для загрузки собранных элементов из хранилища
+function loadCollectedElements() {
     chrome.storage.local.get(['collectedElements'], function (result) {
         const elements = result.collectedElements || [];
-        const resultsDiv = document.getElementById('results');
-
-        if (elements.length === 0) {
-            resultsDiv.innerHTML = '<p>Нет собранных данных</p>';
-            return;
-        }
-
-        // Показываем индикатор загрузки
-        resultsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Генерируем XPath...</p>';
-
-        // Автоматически генерируем XPath
-        generateXPath(elements[0], elements[1]);
+        displayResults(elements);
     });
-});
+}
+
+// Метод для отображения результатов
+function displayResults(elements) {
+    const resultsDiv = document.getElementById('results');
+
+    if (elements.length === 0) {
+        showNoDataMessage(resultsDiv);
+        return;
+    }
+
+    showLoadingIndicator(resultsDiv);
+    generateXPath(elements[0], elements[1]);
+}
+
+// Метод для отображения сообщения об отсутствии данных
+function showNoDataMessage(resultsDiv) {
+    resultsDiv.innerHTML = '<p>Нет собранных данных</p>';
+}
+
+// Метод для отображения индикатора загрузки
+function showLoadingIndicator(resultsDiv) {
+    resultsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Генерируем XPath...</p>';
+}
 
 // Функция для генерации XPath через OpenRouter
 async function generateXPath(element0, element1) {
