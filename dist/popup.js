@@ -5,6 +5,11 @@ initializeExtension();
 function initializeExtension() {
     document.addEventListener('DOMContentLoaded', function () {
         loadCollectedElements();
+
+        const loadButton = document.getElementById('loadElementsBtn');
+        loadButton.addEventListener('click', function() {
+            loadCollectedElements();
+        });
     });
 }
 
