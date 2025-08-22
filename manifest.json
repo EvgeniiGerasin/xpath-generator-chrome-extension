@@ -15,6 +15,9 @@
     "action": {
         "default_title": "Запустить процесс"
     },
+    "host_permissions": [
+        "*://*.nvidia.com/*"
+    ],
     "icons": {
         "16": "dist/icons/icon.png",
         "32": "dist/icons/icon.png",
